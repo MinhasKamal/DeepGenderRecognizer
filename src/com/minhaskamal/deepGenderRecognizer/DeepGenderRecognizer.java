@@ -12,7 +12,7 @@ import java.io.IOException;
 
 import com.minhaskamal.egami.matrix.Matrix;
 import com.minhaskamal.egami.matrixUtil.MatrixUtilities;
-import com.minhaskamal.intellectron.MultiLayerNeuralNetworkImplementation;
+import com.minhaskamal.intellectron.DeepNeuralNetworkImplementation;
 
 public class DeepGenderRecognizer {
 	public static void main(String[] args) throws Exception {
@@ -36,8 +36,8 @@ public class DeepGenderRecognizer {
 		/**/
 		//train//
 		System.out.println("TRAINING NETWORK...");
-		int[] numbersOfNeuronsInLayers = new int[]{20, 5, 1};
-		MultiLayerNeuralNetworkImplementation neuralNetworkImplementation = new MultiLayerNeuralNetworkImplementation(numbersOfNeuronsInLayers,
+		int[] numbersOfNeuronsInLayers = new int[]{60, 20, 5, 1};
+		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(numbersOfNeuronsInLayers,
 				0.1, matrixHeight*matrixWidth);
 		neuralNetworkImplementation = train(neuralNetworkImplementation, inputs, outputs);
 		/**/
@@ -66,8 +66,8 @@ public class DeepGenderRecognizer {
 	
 	//////////////////////////////////////////////////////////////////////////////
 	
-	public static MultiLayerNeuralNetworkImplementation train(
-			MultiLayerNeuralNetworkImplementation neuralNetworkImplementation,
+	public static DeepNeuralNetworkImplementation train(
+			DeepNeuralNetworkImplementation neuralNetworkImplementation,
 			double[][][] inputs, double[][] outputs){
 		
 		int cycle=30;
@@ -77,14 +77,14 @@ public class DeepGenderRecognizer {
 					neuralNetworkImplementation.train(inputs[i][j], outputs[i]);
 				}
 			}
-			System.out.println("Cycle- " + c);
+			System.out.println("Epoch- " + c);
 		}
 		
 		return neuralNetworkImplementation;
 	}
 	
 	public static void predict(
-			MultiLayerNeuralNetworkImplementation neuralNetworkImplementation,
+			DeepNeuralNetworkImplementation neuralNetworkImplementation,
 			double[][][] inputs){
 		
 		for(int i=0; i<2; i++){
