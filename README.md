@@ -1,4 +1,4 @@
-# DEEP GENDER RECOGNIZER
+# :restroom: DEEP GENDER RECOGNIZER
 
 #### A Plain Demonstration of Gender Recognition Using [EGAMI](https://github.com/MinhasKamal/Egami) and [INTELLECTRON](https://github.com/MinhasKamal/Intellectron) . 
 
