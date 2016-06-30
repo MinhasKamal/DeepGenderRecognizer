@@ -17,7 +17,7 @@ import com.minhaskamal.intellectron.DeepNeuralNetworkImplementation;
 public class DeepGenderRecognizer {
 	public static void main(String[] args) throws Exception {
 		System.out.println("OPERATION STARTED!!!");
-		
+		String workspace = System.getenv("SystemDrive") + System.getenv("HOMEPATH") + "\\Desktop\\";
 		
 		//prepare data//
 		System.out.println("PREPARING DATA...");
@@ -29,26 +29,34 @@ public class DeepGenderRecognizer {
 		
 		double[][] outputs = new double[inputs.length][];
 		for(int i=0; i<outputs.length; i++){
-			outputs[i] = new double[]{i};
+			outputs[i] = new double[inputs.length];
+			outputs[i][i] = 1;
 		}
+
 		
+		/**/
+		//create//
+		System.out.println("CREATING NETWORK...");
+		int[] numbersOfNeuronsInLayers = new int[]{75, 25, 5, 2};
+		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(numbersOfNeuronsInLayers,
+				0.1, matrixHeight*matrixWidth);
+		/**/
+		
+		/*/
+		//load//
+		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(workspace+"knowledge90.xml");
+		/**/
 		
 		/**/
 		//train//
 		System.out.println("TRAINING NETWORK...");
-		int[] numbersOfNeuronsInLayers = new int[]{60, 20, 5, 1};
-		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(numbersOfNeuronsInLayers,
-				0.1, matrixHeight*matrixWidth);
-		neuralNetworkImplementation = train(neuralNetworkImplementation, inputs, outputs);
+		neuralNetworkImplementation = train(neuralNetworkImplementation, inputs, outputs, workspace+"knowledge", 200);
 		/**/
 		
-		/**/
+		/*/
 		//store//
-		String workspace = System.getenv("SystemDrive") + System.getenv("HOMEPATH") + "\\Desktop\\";
+		System.out.println("STORING KNOWLEDGE...");
 		neuralNetworkImplementation.dump(workspace+"knowledge.xml");
-		
-		//load//
-//		NeuralNetworkImplementation neuralNetworkImplementation = new NeuralNetworkImplementation(workspace+"know.xml");
 		/**/
 		
 		/**/
@@ -68,9 +76,8 @@ public class DeepGenderRecognizer {
 	
 	public static DeepNeuralNetworkImplementation train(
 			DeepNeuralNetworkImplementation neuralNetworkImplementation,
-			double[][][] inputs, double[][] outputs){
+			double[][][] inputs, double[][] outputs, String filePath, int cycle){
 		
-		int cycle=30;
 		for(int c=0; c<cycle; c++){
 			for(int j=0; j<1000; j++){
 				for(int i=0; i<inputs.length; i++){
@@ -78,6 +85,10 @@ public class DeepGenderRecognizer {
 				}
 			}
 			System.out.println("Epoch- " + c);
+			
+			if((c+1)%10==0){
+				neuralNetworkImplementation.dump(filePath+(c+1)+".xml");
+			}
 		}
 		
 		return neuralNetworkImplementation;
@@ -95,7 +106,7 @@ public class DeepGenderRecognizer {
 			}
 			for(int c=0; c<100; c++){
 				double[] out = neuralNetworkImplementation.predict(inputs[i][1000+c]);
-				if(out[0]<0.5){
+				if(out[0]>out[1]){
 					System.out.println("female");
 				}else{
 					System.out.println("male");
