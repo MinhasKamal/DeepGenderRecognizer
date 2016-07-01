@@ -44,16 +44,19 @@ public class DeepGenderRecognizer {
 		
 		/*/
 		//load//
-		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(workspace+"knowledge90.xml");
-		/**/
-		
-		/**/
-		//train//
-		System.out.println("TRAINING NETWORK...");
-		neuralNetworkImplementation = train(neuralNetworkImplementation, inputs, outputs, workspace+"knowledge", 200);
+		System.out.println("LOADING...");
+		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(
+				workspace+"knowledge200.xml");
 		/**/
 		
 		/*/
+		//train//
+		System.out.println("TRAINING NETWORK...");
+		neuralNetworkImplementation = train(neuralNetworkImplementation, inputs, outputs,
+				workspace+"knowledge", 150, 160, 10);
+		/**/
+		
+		/**/
 		//store//
 		System.out.println("STORING KNOWLEDGE...");
 		neuralNetworkImplementation.dump(workspace+"knowledge.xml");
@@ -67,6 +70,7 @@ public class DeepGenderRecognizer {
 		
 		/*/
 		//generate//
+		System.out.println("GENERATING...");
 		Matrix matrix = createMatrix(neuralNetworkImplementation.generate(new double[]{0.591, 0.51}));
 		matrix.write(workspace+"pic.png");
 		/**/
@@ -76,7 +80,8 @@ public class DeepGenderRecognizer {
 	
 	public static DeepNeuralNetworkImplementation train(
 			DeepNeuralNetworkImplementation neuralNetworkImplementation,
-			double[][][] inputs, double[][] outputs, String filePath, int cycle){
+			double[][][] inputs, double[][] outputs, String filePath, int cycle,
+			int startFrom, int knowledgeStoringDelay){
 		
 		for(int c=0; c<cycle; c++){
 			for(int j=0; j<1000; j++){
@@ -86,8 +91,8 @@ public class DeepGenderRecognizer {
 			}
 			System.out.println("Epoch- " + c);
 			
-			if((c+1)%10==0){
-				neuralNetworkImplementation.dump(filePath+(c+1)+".xml");
+			if((c+1)%knowledgeStoringDelay==0){
+				neuralNetworkImplementation.dump(filePath+(c+1+startFrom)+".xml");
 			}
 		}
 		
