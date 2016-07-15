@@ -6,13 +6,8 @@
 
 package com.minhaskamal.deepGenderRecognizer;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-
-import com.minhaskamal.egami.matrix.Matrix;
-import com.minhaskamal.egami.matrixUtil.MatrixUtilities;
 import com.minhaskamal.intellectron.DeepNeuralNetworkImplementation;
+import com.minhaskamal.intellectron.dataPrepare.ImageDataPreparer;
 
 public class DeepGenderRecognizer {
 	public static void main(String[] args) throws Exception {
@@ -21,51 +16,54 @@ public class DeepGenderRecognizer {
 		
 		//prepare data//
 		System.out.println("PREPARING DATA...");
-		String rootPath = "src/res/img";
-		int matrixHeight = 25;
-		int matrixWidth = 25;
-		String[][] allFilePaths = prepareDataPaths(rootPath);
-		double[][][] inputs = prepareMatrixData(allFilePaths);	//[folder][file][data] i.e. [male][001.png][125,233,...]
+		String rootImagePath = "src/res/img";
+		ImageDataPreparer imageDataPreparer = new ImageDataPreparer(rootImagePath, 1000, 1);
+		double[][] trainingInputs = imageDataPreparer.getTrainingInputs();
+		double[][] trainingOutputs = imageDataPreparer.getTrainingOutputs();
+		double[][] testingInputs = imageDataPreparer.getTestingInputs();
+		double[][] testingOutputs = imageDataPreparer.getTestingOutputs();
 		
-		double[][] outputs = new double[inputs.length][];
-		for(int i=0; i<outputs.length; i++){
-			outputs[i] = new double[inputs.length];
-			outputs[i][i] = 1;
-		}
-
 		
 		/**/
 		//create//
 		System.out.println("CREATING NETWORK...");
+		int matrixHeight = 25;
+		int matrixWidth = 25;
 		int[] numbersOfNeuronsInLayers = new int[]{75, 25, 5, 2};
-		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(numbersOfNeuronsInLayers,
-				0.1, matrixHeight*matrixWidth);
+		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(
+				numbersOfNeuronsInLayers, 0.01, matrixHeight*matrixWidth);
 		/**/
 		
 		/*/
 		//load//
 		System.out.println("LOADING...");
 		DeepNeuralNetworkImplementation neuralNetworkImplementation = new DeepNeuralNetworkImplementation(
-				workspace+"knowledge200.xml");
+				workspace+"knowledge2\\knowledge.xml");
+		/**/
+		
+		/**/
+		//train//
+		System.out.println("TRAINING NETWORK...");
+		neuralNetworkImplementation = train(neuralNetworkImplementation, trainingInputs, trainingOutputs,
+				workspace+"knowledge", 150, 0, 5);
 		/**/
 		
 		/*/
-		//train//
-		System.out.println("TRAINING NETWORK...");
-		neuralNetworkImplementation = train(neuralNetworkImplementation, inputs, outputs,
-				workspace+"knowledge", 150, 160, 10);
-		/**/
-		
-		/**/
 		//store//
 		System.out.println("STORING KNOWLEDGE...");
 		neuralNetworkImplementation.dump(workspace+"knowledge.xml");
 		/**/
 		
-		/**/
+		/*/
 		//predict//
 		System.out.println("PREDICTING...");
-		predict(neuralNetworkImplementation, inputs);
+		predict(neuralNetworkImplementation, testingInputs);
+		/**/
+		
+		/**/
+		//test//
+		System.out.println("TESTING...");
+		test(neuralNetworkImplementation, testingInputs, testingOutputs);
 		/**/
 		
 		/*/
@@ -80,19 +78,24 @@ public class DeepGenderRecognizer {
 	
 	public static DeepNeuralNetworkImplementation train(
 			DeepNeuralNetworkImplementation neuralNetworkImplementation,
-			double[][][] inputs, double[][] outputs, String filePath, int cycle,
-			int startFrom, int knowledgeStoringDelay){
+			double[][] inputs, double[][] expectedOutputs, String filePath,
+			int numberOfCycles, int startFrom, int knowledgeStoringDelay){
 		
-		for(int c=0; c<cycle; c++){
-			for(int j=0; j<1000; j++){
-				for(int i=0; i<inputs.length; i++){
-					neuralNetworkImplementation.train(inputs[i][j], outputs[i]);
-				}
-			}
-			System.out.println("Epoch- " + c);
+		
+		for(int c=1; c<=numberOfCycles; c++){
+			//show improvement//
+			System.out.println("*Epoch- " + c);
 			
-			if((c+1)%knowledgeStoringDelay==0){
-				neuralNetworkImplementation.dump(filePath+(c+1+startFrom)+".xml");
+			//train//
+			//neuralNetworkImplementation.train(inputs, expectedOutputs);
+			neuralNetworkImplementation.train2(inputs, expectedOutputs);
+			
+			//validate//
+			test(neuralNetworkImplementation, inputs, expectedOutputs);
+			
+			//store//
+			if(c%knowledgeStoringDelay==0){
+				neuralNetworkImplementation.dump(filePath+(c+startFrom)+".xml");
 			}
 		}
 		
@@ -101,16 +104,16 @@ public class DeepGenderRecognizer {
 	
 	public static void predict(
 			DeepNeuralNetworkImplementation neuralNetworkImplementation,
-			double[][][] inputs){
+			double[][] inputs){
 		
 		for(int i=0; i<2; i++){
 			if(i==0){
-				System.out.println("##Female##");
+				System.out.println("\n\n##Female##");
 			}else{
-				System.out.println("##Male##");
+				System.out.println("\n\n##Male##");
 			}
 			for(int c=0; c<100; c++){
-				double[] out = neuralNetworkImplementation.predict(inputs[i][1000+c]);
+				double[] out = neuralNetworkImplementation.predict(inputs[i]);
 				if(out[0]>out[1]){
 					System.out.println("female");
 				}else{
@@ -119,94 +122,19 @@ public class DeepGenderRecognizer {
 			}
 		}
 	}
+	
+	public static void test(DeepNeuralNetworkImplementation neuralNetworkImplementation,
+			double[][] inputs, double[][] expectedOutputs){
+		
+		double accuracy = neuralNetworkImplementation.test(inputs, expectedOutputs, 0.3);
+		
+		int testDataNumber = 0;
+		for(int i=0; i<expectedOutputs.length; i++){
+			testDataNumber += expectedOutputs[i].length;
+		}
+		
+		System.out.println("Test Data: "+testDataNumber+"; Accuracy: "+accuracy);
+	}
 
-	///////////////////////////////////////////////////////////////////////////////
-	
-	public static int[] vectorize(Matrix matrix){
-		int height = matrix.getRows();
-		int width = matrix.getCols();
-		
-		int[] vector = new int[height*width];
-		
-		for(int i=0, k=0; i<height; i++){
-			for(int j=0; j<width; j++){
-				vector[k] = matrix.pixels[i][j][0];
-				k++;
-			}
-		}
-		
-		return vector;
-	}
-	
-	public static double[] scale(int[] vector, int minValue, int maxValue){
-		double[] scaledVector = new double[vector.length];
-		
-		for(int i=0; i<vector.length; i++){
-			scaledVector[i] = (vector[i]-minValue)/(maxValue-minValue);
-		}
-		
-		return scaledVector;
-	}
-	
-	public static Matrix createMatrix(double[] vector){ //creates square matrix
-		int row = (int) Math.sqrt(vector.length);
-		int col = row;
-		
-		Matrix matrix = new Matrix(row, col, Matrix.BLACK_WHITE);
-		
-		int k=0;
-		for(int i=0; i<row; i++){
-			for(int j=0; j<col; j++){
-				matrix.pixels[i][j] = new int[]{ (int) (vector[k]*254) };
-				k++;
-			}
-		}
-		
-		return matrix;
-	}
-	
-	
-	///////////////////////////////////////////////////////////////////////////////
-	
-	public static String[][] prepareDataPaths(String rootFolderPath){
-		File[] directories = new File(rootFolderPath).listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File arg0) {
-				return arg0.isDirectory();
-			}
-		});
-		
-		String[][] allFilePaths = new String[directories.length][];
-		for(int i=0; i<directories.length; i++){
-			File[] files = directories[i].listFiles();
-			allFilePaths[i] = new String[files.length];
-			
-			for(int j=0; j<files.length; j++){
-				allFilePaths[i][j] = files[j].getAbsolutePath();
-			}
-		}
-		
-		return allFilePaths;
-	}
-	
-	public static double[][][] prepareMatrixData(String[][] allFilePaths){
-		double[][][] inputs = new double[allFilePaths.length][][];
-		
-		try {
-			for(int i=0; i<allFilePaths.length; i++){
-				inputs[i] = new double[allFilePaths[i].length][];
-				for(int j=0; j<allFilePaths[i].length; j++){
-					Matrix matrix;
-						matrix = new Matrix(allFilePaths[i][j], Matrix.BLACK_WHITE);
-					matrix = new MatrixUtilities().convertToBinary(matrix, 170);
-					int[] rawInputVector = vectorize(matrix);
-					inputs[i][j] = scale(rawInputVector, 0, 255);
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return inputs;
-	}
+
 }
