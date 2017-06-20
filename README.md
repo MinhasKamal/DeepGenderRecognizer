@@ -2,9 +2,7 @@
 
 #### A Plain Demonstration of Gender Recognition Using Deep Neural Network
 
-[Egami](https://github.com/MinhasKamal/Egami) and [Intellectron](https://github.com/MinhasKamal/Intellectron). 
-
-As the name explains this project detects gender from image using deep learning. There is no image processing here. For image reading we used [Egami](https://github.com/MinhasKamal/Egami), and accomplished machine learning part with [Intellectron](https://github.com/MinhasKamal/Intellectron).
+As the name explains, this project detects gender from image using deep learning. No image processing is done here. Raw pixel data is fed to the Deep Neural Network for automatic feature extraction. For image reading we used [Egami](https://github.com/MinhasKamal/Egami), and machine learning part is accomplished with [Intellectron](https://github.com/MinhasKamal/Intellectron).
 
 ### How to Run?
 
