@@ -6,8 +6,10 @@
 
 package com.minhaskamal.deepGenderRecognizer;
 
+import com.minhaskamal.egami.matrix.Matrix;
+import com.minhaskamal.egami.matrix.MatrixUtilities;
 import com.minhaskamal.intellectron.DeepNeuralNetworkImplementation;
-import com.minhaskamal.intellectron.dataPrepare.ImageDataPreparer;
+import com.minhaskamal.intellectron.dataPrepare.DataPreparer;
 
 public class DeepGenderRecognizer {
 	public static void main(String[] args) throws Exception {
@@ -17,11 +19,22 @@ public class DeepGenderRecognizer {
 		//prepare data//
 		System.out.println("PREPARING DATA...");
 		String rootImagePath = "src/res/img";
-		ImageDataPreparer imageDataPreparer = new ImageDataPreparer(rootImagePath, 1000, 1);
-		double[][] trainingInputs = imageDataPreparer.getTrainingInputs();
-		double[][] trainingOutputs = imageDataPreparer.getTrainingOutputs();
-		double[][] testingInputs = imageDataPreparer.getTestingInputs();
-		double[][] testingOutputs = imageDataPreparer.getTestingOutputs();
+		DataPreparer dataPreparer = new DataPreparer(rootImagePath, 1000, 1) {
+			@Override
+			public double[] readFileVectorizeAndScale(String imageFilePath) {
+				Matrix matrix = new Matrix(imageFilePath, Matrix.BLACK_WHITE);
+				int[][] vector2D = MatrixUtilities.vectorize(matrix);
+				int[] vector = new int[vector2D.length];
+				for(int i=0; i<vector2D.length; i++){
+					vector[i] = vector2D[i][0];
+				}
+				return this.scale(vector, Matrix.MIN_PIXEL, Matrix.MAX_PIXEL);
+			}
+		};
+		double[][] trainingInputs = dataPreparer.getTrainingInputs();
+		double[][] trainingOutputs = dataPreparer.getTrainingOutputs();
+		double[][] testingInputs = dataPreparer.getTestingInputs();
+		double[][] testingOutputs = dataPreparer.getTestingOutputs();
 		
 		
 		/**/
